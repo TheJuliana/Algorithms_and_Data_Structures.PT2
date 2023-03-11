@@ -12,6 +12,7 @@
 #include <iostream>
 #include <vector>
 #include <algorithm>
+#include <valarray>
 
 struct Point{
     int x;
@@ -19,8 +20,18 @@ struct Point{
 };
 
 //определяет, с какой стороны от вектора АВ находится точка С (при <0 - правая, >0 - левая сторона)
-int Rotate(Point &A, Point &B, Point &C) {
+int Rotate(const Point &A, const Point &B, const Point &C) {
     return (B.x-A.x)*(C.y-B.y)-(B.y-A.x)*(C.x-B.x);
+}
+
+int dist(const Point &A, const Point &B) {
+    return sqrt(pow((B.x-A.x),2)+pow((B.y-A.y),2));
+}
+
+bool check(const int &A, const int &B, const int &C, const std::vector<Point> &points) {
+    int tmp = Rotate(points[A], points[B], points[C]);
+    if (tmp < 0 || tmp == 0 && dist(points[A], points[C]) < dist(points[A], points[B])) return true;
+    return false;
 }
 
 void PrintMasP(std::vector<Point> &points) {
@@ -69,11 +80,15 @@ int main() {
     //Сортируем (вставками) по возрастанию полярного угла относительно минимальной точки
     for (int i = 2; i < points.size(); i++) {
         int j=i;
-        while (j>1 && Rotate(points[points_indexes[0]], points[points_indexes[j-1]], points[points_indexes[j]])<0) {
+        while ((j>1 && check(points_indexes[0], points_indexes[j - 1], points_indexes[j], points)))  {
             std::swap(points_indexes[j-1], points_indexes[j]);
             j--;
         }
     }
+
+
+    for (int x : points_indexes) std::cout << x << " ";
+    std::cout << std::endl;
 
     //Удаляем те вершины, в которых выполняется правый поворот
     std::vector<int> stack;
@@ -81,10 +96,9 @@ int main() {
     stack.push_back(points_indexes[1]);
 
     //std::cout << "!"<< stack.size() << std::endl; <--для отладки
-
     for (int i = 2; i < points.size(); i++) {
         //отслеживаем направление поворота с точки зрения последних двух вершин в стеке
-        while (Rotate(points[stack[stack.size()-2]], points[stack[stack.size()-1]], points[points_indexes[i]])<0) {
+        while (stack.size() >= 2 && Rotate(points[stack[stack.size()-2]], points[stack[stack.size()-1]], points[points_indexes[i]])<=0) {
             stack.pop_back();
             //std::cout << "!stack popped "<< stack.size() << std::endl; <--для отладки
         }
